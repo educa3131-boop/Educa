@@ -121,9 +121,7 @@ Sem `RESEND_API_KEY`, a plataforma não envia emails reais. Os links de verifica
 
 ## Deploy
 
-A EDUCA precisa de um servidor persistente com volume para o SQLite. **Não recomendamos Vercel** para esta arquitectura, porque o sistema de ficheiros é efémero e o `better-sqlite3` falha no Node 26 do Vercel.
-
-Usa Railway, Render, Fly.io ou um VPS. O repositório inclui `Dockerfile`, `render.yaml`, `fly.toml` e `railway.json`. Instruções passo a passo em [DEPLOY.md](DEPLOY.md).
+O build do Vercel foi corrigido para Node 22 (`vercel.json` + `api/index.js`). Podes fazer deploy no Vercel, mas a base de dados SQLite fica em `/tmp` e é **temporária**. Para persistência, usa Railway, Render, Fly.io ou um VPS com volume. O repositório inclui `Dockerfile`, `render.yaml`, `fly.toml`, `railway.json` e `vercel.json`. Instruções em [DEPLOY.md](DEPLOY.md).
 
 ## Testes
 

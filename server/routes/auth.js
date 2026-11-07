@@ -14,12 +14,13 @@ const registerSchema = z.object({
 const loginSchema = z.object({ email: z.string().trim().toLowerCase().email(), password: z.string().min(1) });
 const profileSchema = z.object({ name: z.string().trim().min(2).max(80).optional(), phone: z.string().trim().max(30).optional(), city: z.string().trim().max(80).optional(), bio: z.string().trim().max(1200).optional(), avatarFileId: z.string().optional() });
 
-function issueVerification(user) {
+function issueVerification(user, req) {
   const token = uid('ev_') + uid('');
   const expires = new Date(Date.now() + 48 * 3600e3).toISOString();
   db.prepare('INSERT INTO email_verifications (id,user_id,token_hash,expires_at,created_at) VALUES (?,?,?,?,?)')
     .run(uid('evr_'), user.id, hashToken(token), expires, now());
-  const url = `${process.env.APP_URL || 'http://localhost:3000'}/verificar-email?token=${token}`;
+  const base = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+  const url = `${base}/verificar-email?token=${token}`;
   sendMail({ to: user.email, subject: 'Confirma o teu email na EDUCA', text: `Confirma o teu email: ${url}`, html: `<p>Olá ${user.name},</p><p>Confirma o teu email na EDUCA:</p><p><a href="${url}">${url}</a></p>` });
   return { token, url };
 }
@@ -32,7 +33,7 @@ router.post('/register', asyncHandler(async (req, res) => {
   db.prepare(`INSERT INTO users (id,email,password_hash,name,phone,role,status,email_verified,created_at,updated_at)
     VALUES (?,?,?,?,?,'student','active',0,?,?)`).run(id, data.email, hashPassword(data.password), data.name, data.phone || null, now(), now());
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(id);
-  const mail = issueVerification(user);
+  const mail = issueVerification(user, req);
   const token = createSession(id, req.get('user-agent'));
   setSessionCookie(res, token);
   audit(user, 'auth.register', 'user', id, { email: data.email });
@@ -65,7 +66,8 @@ router.post('/forgot-password', asyncHandler(async (req, res) => {
     const token = uid('pr_') + uid('');
     db.prepare('INSERT INTO password_resets (id,user_id,token_hash,expires_at,created_at) VALUES (?,?,?,?,?)')
       .run(uid('prr_'), user.id, hashToken(token), new Date(Date.now() + 3600e3).toISOString(), now());
-    const url = `${process.env.APP_URL || 'http://localhost:3000'}/repor-palavra-passe?token=${token}`;
+    const base = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+    const url = `${base}/repor-palavra-passe?token=${token}`;
     await sendMail({ to: user.email, subject: 'Repõe a tua palavra-passe EDUCA', text: `Repõe a palavra-passe: ${url}`, html: `<p><a href="${url}">${url}</a></p>` });
     devUrl = url;
   }
@@ -98,7 +100,7 @@ router.post('/verify-email', asyncHandler(async (req, res) => {
 
 router.post('/resend-verification', requireAuth, asyncHandler(async (req, res) => {
   if (req.user.email_verified) return res.json({ ok: true });
-  const mail = issueVerification(req.user);
+  const mail = issueVerification(req.user, req);
   res.json({ ok: true, ...(exposeDevLinks() ? { url: mail.url } : {}) });
 }));
 

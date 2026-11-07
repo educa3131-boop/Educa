@@ -66,6 +66,9 @@ if (process.env.NODE_ENV === 'production' && process.env.COOKIE_SECURE !== 'true
 if (process.env.NODE_ENV === 'production' && process.env.EXPOSE_DEV_LINKS === 'true') console.warn('[EDUCA] AVISO: EXPOSE_DEV_LINKS=true expõe links de verificação/reposição. Desactiva em produção.');
 
 const port = Number(process.env.PORT) || 3000;
-app.listen(port, '0.0.0.0', () => console.log(`EDUCA a correr em http://0.0.0.0:${port}`));
+const isDirectRun = process.argv[1] && process.argv[1].replace(/\\/g, '/').endsWith('/server/index.js');
+if (isDirectRun) {
+  app.listen(port, '0.0.0.0', () => console.log(`EDUCA a correr em http://0.0.0.0:${port}`));
+}
 
 export default app;

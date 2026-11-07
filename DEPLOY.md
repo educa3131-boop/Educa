@@ -7,15 +7,32 @@ A EDUCA é uma aplicação **Express + SQLite** com um servidor de longa duraç�
 3. HTTPS (para cookies seguros).
 4. Variáveis de ambiente para o proprietário e integrações.
 
-## Porque não Vercel?
+## Vercel: build corrigido, mas dados temporários
 
-O Vercel é serverless:
+O erro de build foi corrigido:
 
-- O sistema de ficheiros é efémero e, em muitos casos, de leitura. O SQLite não persiste entre execuções.
-- O `better-sqlite3` é um módulo nativo. No Node 26 do Vercel, a compilação falha (`GetPrototype`, `PropertyCallbackInfo::This`, etc.).
-- Mesmo que a compilação passasse, a base de dados seria perdida.
+- `package.json` usa Node 22 (`engines: 22.x`).
+- `vercel.json` usa `runtime: nodejs22.x`.
+- `api/index.js` exporta a aplicação Express como função serverless.
+- O `better-sqlite3` tem binário pré-compilado para Node 22. O build passa.
 
-Para usar Vercel, seria necessário migrar a base de dados para PostgreSQL (Vercel Postgres, Neon ou Supabase) e reescrever a camada de dados para `pg`. Isso é uma alteração de arquitectura, não uma configuração.
+**Limitação importante:** o Vercel não tem um sistema de ficheiros persistente. A base de dados fica em `/tmp/educa.sqlite` e é temporária. Contas, reservas, pagamentos e mensagens desaparecem em cold starts ou reinícios. Para produção, usa Railway, Render, Fly.io ou um banco hospedado (PostgreSQL/Turso).
+
+### Deploy no Vercel
+
+1. Importa o repositório `educa3131-boop/Educa` no Vercel.
+2. Framework: **Vite** (detetado automaticamente).
+3. Build command: `npm run build`.
+4. Output directory: `dist`.
+5. Define as variáveis:
+   - `ADMIN_PASSWORD` (secreta)
+   - `APP_URL=https://<url-do-vercel>`
+   - Opcional: `RESEND_API_KEY`, `MAIL_FROM`, `JITSI_JAAS_DOMAIN`, `JITSI_JAAS_KID`, `JITSI_JAAS_PRIVATE_KEY`.
+6. Faz deploy.
+7. A API fica em `/api`; o frontend em `/`.
+8. A palavra-passe inicial do administrador é a de `ADMIN_PASSWORD`. Se não definires, é gerada uma aleatória e mostrada nos logs da função.
+
+O `vercel.json` já define `DATA_DIR=/tmp`, `COOKIE_SECURE=true`, `EXPOSE_DEV_LINKS=false` e `NODE_ENV=production`.
 
 ## Opção recomendada: Railway
 
