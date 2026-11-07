@@ -119,6 +119,12 @@ Copia `.env.example` para `.env`. O servidor carrega o `.env` automaticamente.
 
 Sem `RESEND_API_KEY`, a plataforma não envia emails reais. Os links de verificação e reposição são devolvidos na resposta da API e mostrados no ecrã quando `EXPOSE_DEV_LINKS=true`. Em produção, configura o Resend e desactiva `EXPOSE_DEV_LINKS`.
 
+## Deploy
+
+A EDUCA precisa de um servidor persistente com volume para o SQLite. **Não recomendamos Vercel** para esta arquitectura, porque o sistema de ficheiros é efémero e o `better-sqlite3` falha no Node 26 do Vercel.
+
+Usa Railway, Render, Fly.io ou um VPS. O repositório inclui `Dockerfile`, `render.yaml`, `fly.toml` e `railway.json`. Instruções passo a passo em [DEPLOY.md](DEPLOY.md).
+
 ## Testes
 
 ```bash
